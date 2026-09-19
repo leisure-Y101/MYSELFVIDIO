@@ -1,0 +1,403 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>影像 · Video</title>
+<style>
+  :root{
+    --card:rgba(255,255,255,.05);
+    --stroke:rgba(255,255,255,.13);
+    --text:#f5f7fb;
+    --muted:rgba(245,247,251,.6);
+    --accent:#7c8cff;
+    --accent2:#43e5c0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:#000;color:var(--text);
+    min-height:100vh;overflow-x:hidden;
+  }
+
+  /* 纯黑背景 + 粒子 */
+  #particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+  main{position:relative;z-index:2;width:min(1120px,100%);margin:0 auto;padding:56px 22px 80px}
+
+  /* 顶部封面大图 */
+  .hero{
+    position:relative;border-radius:22px;overflow:hidden;margin-bottom:40px;
+    height:clamp(230px,40vw,430px);
+    border:1px solid var(--stroke);
+    box-shadow:0 34px 80px -28px rgba(0,0,0,.95), 0 0 0 1px rgba(124,140,255,.12);
+    animation:rise .9s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .hero img{width:100%;height:100%;object-fit:cover;display:block;
+            transform:scale(1.03);transition:transform 9s ease}
+  .hero:hover img{transform:scale(1.1)}
+  .hero::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.1) 20%,rgba(0,0,0,.55) 65%,rgba(0,0,0,.92));}
+  .hero-text{position:absolute;left:0;bottom:0;z-index:2;padding:clamp(20px,3.4vw,42px)}
+  h1{font-size:clamp(30px,5.4vw,58px);font-weight:800;letter-spacing:3px;line-height:1;
+     background:linear-gradient(120deg,#fff,#b7c0ff 45%,#7ff0da);
+     -webkit-background-clip:text;background-clip:text;color:transparent;
+     text-shadow:0 6px 30px rgba(0,0,0,.4)}
+  .sub{color:var(--muted);font-size:12.5px;letter-spacing:4px;text-transform:uppercase;margin-top:10px}
+
+  /* 视频网格 */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:18px}
+  .card{
+    position:relative;border-radius:16px;overflow:hidden;cursor:pointer;
+    background:var(--card);border:1px solid var(--stroke);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,border-color .28s;
+    animation:rise .7s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  .card:hover{transform:translateY(-5px);border-color:rgba(124,140,255,.55);
+              box-shadow:0 24px 50px -18px rgba(0,0,0,.9),0 0 0 1px rgba(124,140,255,.2)}
+  .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#0a0b12}
+  .card .overlay{position:absolute;inset:0;pointer-events:none;
+                 background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.32))}
+  .card .badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
+    width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(8,10,18,.5);border:1px solid rgba(255,255,255,.4);
+    backdrop-filter:blur(6px);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
+  .card:hover .badge{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .card .badge svg{width:22px;height:22px;fill:#fff;margin-left:3px}
+  /* 弹窗播放器 */
+  .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+         padding:24px;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .modal.open{display:flex;animation:fade .25s ease both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal-inner{position:relative;width:80vw;height:80vh;height:80dvh;animation:pop .35s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+  .player{position:relative;width:100%;height:100%;border-radius:18px;overflow:hidden;background:#000;line-height:0;
+          box-shadow:0 30px 80px -20px rgba(0,0,0,.95)}
+  .player video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+  .player:fullscreen{width:100vw;height:100vh;height:100dvh;border-radius:0}
+  .video-nav{position:absolute;top:50%;z-index:5;transform:translateY(-50%);
+    width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(255,255,255,.25);background:rgba(20,22,30,.65);color:#fff;cursor:pointer;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .2s,border-color .2s}
+  .video-nav:hover{background:rgba(124,140,255,.35);border-color:rgba(255,255,255,.6)}
+  .video-nav:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+  .video-nav svg{width:20px;height:20px;fill:currentColor}
+  .video-prev{left:18px}
+  .video-next{right:18px}
+  .close{position:absolute;top:-14px;right:-14px;z-index:5;width:40px;height:40px;border-radius:50%;
+         border:1px solid rgba(255,255,255,.25);background:rgba(20,22,30,.92);color:#fff;font-size:20px;
+         cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s,background .2s}
+  .close:hover{transform:rotate(90deg);background:rgba(40,44,60,.95)}
+
+  .controls{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;align-items:center;gap:12px;
+            padding:22px 16px 14px;
+            background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.25) 55%,transparent);
+            opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s}
+  .player:hover .controls,.player.show-controls .controls{opacity:1;transform:none}
+  .ctrl{border:0;background:transparent;color:#fff;cursor:pointer;padding:6px;border-radius:10px;
+        display:flex;align-items:center;justify-content:center;transition:background .2s,transform .15s}
+  .ctrl:hover{background:rgba(255,255,255,.14)}
+  .ctrl:active{transform:scale(.92)}
+  .ctrl svg{width:20px;height:20px;display:block}
+  .bar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.2);cursor:pointer;position:relative;min-width:60px}
+  .bar:hover{height:8px}
+  .progress{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;
+            background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .progress::after{content:"";position:absolute;right:-5px;top:50%;width:12px;height:12px;border-radius:50%;
+            background:#fff;transform:translateY(-50%) scale(0);transition:transform .2s;
+            box-shadow:0 0 10px rgba(255,255,255,.8)}
+  .bar:hover .progress::after{transform:translateY(-50%) scale(1)}
+  .time{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .big-play{position:absolute;inset:0;z-index:3;border:0;cursor:pointer;color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at center,rgba(0,0,0,.35),transparent 68%);transition:opacity .35s}
+  .big-play svg{width:74px;height:74px;filter:drop-shadow(0 10px 28px rgba(0,0,0,.65));transition:transform .25s}
+  .big-play:hover svg{transform:scale(1.08)}
+  .big-play.hidden{opacity:0;pointer-events:none}
+
+  @media (max-width:560px){ main{padding:40px 16px 60px} }
+</style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+
+  <main>
+    <!-- 顶部封面：background photo.jpg -->
+    <section class="hero">
+      <img src="background photo.jpg" alt="cover" />
+      <div class="hero-text">
+        <h1>影像</h1>
+        <p class="sub">A moment in motion</p>
+      </div>
+    </section>
+
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="modal-inner">
+      <button class="close" id="close" aria-label="关闭">&times;</button>
+      <div class="player" id="player">
+        <video id="v" playsinline preload="metadata"></video>
+        <button class="video-nav video-prev" id="prevBtn" type="button" aria-label="上一个视频">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5v14L5 12z"/></svg>
+        </button>
+        <button class="video-nav video-next" id="nextBtn" type="button" aria-label="下一个视频">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="big-play" id="bigPlay" aria-label="播放">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="controls">
+          <button class="ctrl" id="playBtn" aria-label="播放/暂停"></button>
+          <div class="bar" id="bar"><div class="progress" id="prog"></div></div>
+          <span class="time" id="time">0:00 / 0:00</span>
+          <button class="ctrl" id="muteBtn" aria-label="静音"></button>
+          <button class="ctrl" id="fsBtn" aria-label="全屏"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+   视频列表：改这里即可（file 是文件名）
+   ============================================================ */
+const VIDEOS = [
+  { file: "03eb23efd4a84696a8c4276631318d83.mp4" },
+  { file: "20556409c81599d590abdefed717b17d.mp4" },
+  { file: "47b34f7bd3200bab080c2cff867743d4.mp4" },
+  { file: "4c0f8bf51c17668b1d308b7ce15d92c4.mp4" },
+  { file: "da639c594b1034a332d1bafa82ff9edc.mp4" },
+  { file: "e4e67044108d11bfe9b0ff7b47ad5215.mp4" },
+  { file: "eb68e04056186894f105a1829a927fe7.mp4" },
+  { file: "f0cdadecaee9f2b954e19c4a277c0af7.mp4" },
+  { file: "12293fd78aec3e02c9d30cc6f1c59fd2.mp4" },
+  { file: "24c8f31500f0d5503c566190ae133b80.mp4" },
+  { file: "3051a878bdbfe447e7449a45878d9d30.mp4" },
+  { file: "350c36c06e3f057f14ac9b64f8ed8ce4.mp4" },
+  { file: "496a197a705678493cf0fc656670e42c.mp4" },
+  { file: "55e78d6992f0f029e2c8423ffa78794e.mp4" },
+  { file: "5ae3f57d8e2c326526ed2a17c52c3130.mp4" },
+  { file: "67c2997a55ba95e8199b4daf1c974e08.mp4" },
+  { file: "688a92094457d86f47eed0aeaa62d6b7.mp4" },
+  { file: "73916c7775cf949f1559fe30785bc541.mp4" },
+  { file: "85665f235a550b5b49106a54b56bb83b.mp4" },
+  { file: "97879c09da36bf70cf13d884d671d1d4.mp4" },
+  { file: "9c9fe319515334574f395496d92718f5.mp4" },
+  { file: "fe20430a83b4afe93a2827249b620c86.mp4" }
+];
+
+/* ---------------- 构建视频网格 ---------------- */
+const grid = document.getElementById('grid');
+const PLAY_SVG = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+VIDEOS.forEach((item, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.animationDelay = (i * 60) + 'ms';
+  card.innerHTML = `
+    <video class="thumb" src="${item.file}#t=0.4" preload="metadata" muted playsinline></video>
+    <div class="overlay"></div>
+    <div class="badge">${PLAY_SVG}</div>`;
+  card.addEventListener('click', () => openVideo(i));
+  grid.appendChild(card);
+});
+
+/* ---------------- 弹窗播放器 ---------------- */
+const modal = document.getElementById('modal');
+const v = document.getElementById('v');
+const player = document.getElementById('player');
+const bigPlay = document.getElementById('bigPlay');
+const playBtn = document.getElementById('playBtn');
+const bar = document.getElementById('bar');
+const prog = document.getElementById('prog');
+const time = document.getElementById('time');
+const muteBtn = document.getElementById('muteBtn');
+const fsBtn = document.getElementById('fsBtn');
+let currentVideoIndex = -1;
+
+const ICON = {
+  play : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  vol  : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>',
+  mute : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm3.9 2 2.1-2.1-1.4-1.4-2.1 2.1-2.1-2.1-1.4 1.4 2.1 2.1-2.1 2.1 1.4 1.4 2.1-2.1 2.1 2.1 1.4-1.4z"/></svg>',
+  full : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z"/></svg>'
+};
+
+function fmt(s){
+  if (!isFinite(s)) s = 0;
+  s = Math.max(0, Math.floor(s));
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+
+function openVideo(index){
+  currentVideoIndex = (index + VIDEOS.length) % VIDEOS.length;
+  v.pause();
+  prog.style.width = '0%';
+  time.textContent = '0:00 / 0:00';
+  bigPlay.classList.remove('hidden');
+  playBtn.innerHTML = ICON.play;
+  v.src = VIDEOS[currentVideoIndex].file;
+  v.load();
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  v.play().catch(()=>{});
+}
+function switchVideo(direction){
+  if (currentVideoIndex < 0 || !modal.classList.contains('open')) return;
+  openVideo(currentVideoIndex + direction);
+}
+document.getElementById('prevBtn').addEventListener('click', () => switchVideo(-1));
+document.getElementById('nextBtn').addEventListener('click', () => switchVideo(1));
+function closeVideo(){
+  v.pause();
+  v.removeAttribute('src');
+  v.load();
+  modal.classList.remove('open');
+  currentVideoIndex = -1;
+  document.body.style.overflow = '';
+}
+document.getElementById('close').addEventListener('click', closeVideo);
+modal.addEventListener('click', e => { if (e.target === modal) closeVideo(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeVideo(); });
+
+function toggle(){ v.paused ? v.play() : v.pause(); }
+bigPlay.addEventListener('click', toggle);
+playBtn.addEventListener('click', toggle);
+
+v.addEventListener('play',  () => { bigPlay.classList.add('hidden'); playBtn.innerHTML = ICON.pause; });
+v.addEventListener('pause', () => { bigPlay.classList.remove('hidden'); playBtn.innerHTML = ICON.play; });
+v.addEventListener('ended', () => { bigPlay.classList.remove('hidden'); });
+v.addEventListener('loadedmetadata', () => { time.textContent = '0:00 / ' + fmt(v.duration); });
+v.addEventListener('timeupdate', () => {
+  prog.style.width = (v.duration ? (v.currentTime / v.duration) * 100 : 0) + '%';
+  time.textContent = fmt(v.currentTime) + ' / ' + fmt(v.duration);
+});
+bar.addEventListener('click', e => {
+  const r = bar.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  if (v.duration) v.currentTime = ratio * v.duration;
+});
+muteBtn.addEventListener('click', () => { v.muted = !v.muted; muteBtn.innerHTML = v.muted ? ICON.mute : ICON.vol; });
+fsBtn.addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else player.requestFullscreen && player.requestFullscreen();
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest('button')) return;
+  if (e.code === 'Space' && modal.classList.contains('open')) { e.preventDefault(); toggle(); }
+});
+playBtn.innerHTML = ICON.play;
+muteBtn.innerHTML = ICON.vol;
+fsBtn.innerHTML = ICON.full;
+
+/* ============================================================
+   粒子系统：纯黑背景 + 漂浮 + 鼠标靠近散开（鱼群）
+   ============================================================ */
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+const mouse = { x: -9999, y: -9999, active: false };
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
+window.addEventListener('mouseout',  () => { mouse.active = false; mouse.x = -9999; mouse.y = -9999; });
+window.addEventListener('touchmove', e => { const t = e.touches[0]; mouse.x = t.clientX; mouse.y = t.clientY; mouse.active = true; }, { passive: true });
+window.addEventListener('touchend',  () => { mouse.active = false; mouse.x = -9999; mouse.y = -9999; });
+
+const COLORS = ['#98a5ff', '#55ffda', '#b0bcff', '#78ffe8', '#dbe3ff'];
+let particles = [];
+
+function initParticles(){
+  const count = Math.round(Math.min(300, Math.max(120, (W * H) / 7500)));
+  particles = [];
+  for (let i = 0; i < count; i++){
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - .5) * 0.4,
+      vy: (Math.random() - .5) * 0.4,
+      r: Math.random() * 2.6 + 1.2,
+      c: COLORS[(Math.random() * COLORS.length) | 0],
+      a: Math.random() * 0.3 + 0.65
+    });
+  }
+}
+
+const R = 140;        // 鼠标影响半径
+const LINK = 96;      // 连线距离
+const MAX_SPEED = 5.5;
+
+function frame(){
+  ctx.clearRect(0, 0, W, H);
+
+  for (const p of particles){
+    if (mouse.active){
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < R*R && d2 > 0.01){
+        const d = Math.sqrt(d2);
+        const force = (1 - d / R);
+        p.vx += (dx / d) * force * 1.5;   // 远离鼠标
+        p.vy += (dy / d) * force * 1.5;
+      }
+    }
+    p.vx *= 0.965; p.vy *= 0.965;
+    p.vx += (Math.random() - .5) * 0.03;
+    p.vy += (Math.random() - .5) * 0.03;
+
+    const sp = Math.hypot(p.vx, p.vy);
+    if (sp > MAX_SPEED){ p.vx = p.vx / sp * MAX_SPEED; p.vy = p.vy / sp * MAX_SPEED; }
+
+    p.x += p.vx; p.y += p.vy;
+
+    if (p.x < -12) p.x = W + 12; else if (p.x > W + 12) p.x = -12;
+    if (p.y < -12) p.y = H + 12; else if (p.y > H + 12) p.y = -12;
+  }
+
+  // 邻近连线（鱼群感）
+  ctx.lineWidth = 1;
+  for (let i = 0; i < particles.length; i++){
+    const a = particles[i];
+    for (let j = i + 1; j < particles.length; j++){
+      const b = particles[j];
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < LINK*LINK){
+        const alpha = (1 - Math.sqrt(d2) / LINK) * 0.2;
+        ctx.strokeStyle = 'rgba(172,190,255,' + alpha + ')';
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+  }
+
+  // 粒子本体
+  for (const p of particles){
+    ctx.globalAlpha = p.a;
+    ctx.fillStyle = p.c;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(frame);
+}
+
+resize();
+initParticles();
+frame();
+window.addEventListener('resize', () => { resize(); initParticles(); });
+</script>
+</body>
+</html>
