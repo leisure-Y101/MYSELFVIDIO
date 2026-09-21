@@ -1,15 +1,9 @@
 /* 由 scripts/build-album.ps1 自动生成，请勿手动修改。 */
 window.LOCAL_MEDIA = [
-  { name: '97879c09da36bf70cf13d884d671d1d4.mp4', url: 'media/97879c09da36bf70cf13d884d671d1d4.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789998886472 },
   { name: '3051a878bdbfe447e7449a45878d9d30.mp4', url: 'media/3051a878bdbfe447e7449a45878d9d30.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789998886383 },
-  { name: '496a197a705678493cf0fc656670e42c.mp4', url: 'media/496a197a705678493cf0fc656670e42c.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789998886294 },
-  { name: '5ae3f57d8e2c326526ed2a17c52c3130.mp4', url: 'media/5ae3f57d8e2c326526ed2a17c52c3130.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789998886201 },
-  { name: '12293fd78aec3e02c9d30cc6f1c59fd2.mp4', url: 'media/12293fd78aec3e02c9d30cc6f1c59fd2.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789998886113 },
   { name: '688a92094457d86f47eed0aeaa62d6b7.mp4', url: 'media/688a92094457d86f47eed0aeaa62d6b7.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737085430 },
   { name: '85665f235a550b5b49106a54b56bb83b.mp4', url: 'media/85665f235a550b5b49106a54b56bb83b.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737084939 },
-  { name: '55e78d6992f0f029e2c8423ffa78794e.mp4', url: 'media/55e78d6992f0f029e2c8423ffa78794e.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737083937 },
   { name: '24c8f31500f0d5503c566190ae133b80.mp4', url: 'media/24c8f31500f0d5503c566190ae133b80.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737082810 },
-  { name: '9c9fe319515334574f395496d92718f5.mp4', url: 'media/9c9fe319515334574f395496d92718f5.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737081031 },
   { name: '73916c7775cf949f1559fe30785bc541.mp4', url: 'media/73916c7775cf949f1559fe30785bc541.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737080372 },
   { name: '67c2997a55ba95e8199b4daf1c974e08.mp4', url: 'media/67c2997a55ba95e8199b4daf1c974e08.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737076539 },
   { name: '350c36c06e3f057f14ac9b64f8ed8ce4.mp4', url: 'media/350c36c06e3f057f14ac9b64f8ed8ce4.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737075057 },
