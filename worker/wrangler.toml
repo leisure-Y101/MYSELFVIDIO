@@ -1,0 +1,16 @@
+# Cloudflare Worker 配置（用 wrangler 命令行部署时使用）
+# 部署前把下面 [vars] 里的占位值改成你自己的。
+# 敏感值（GH_TOKEN、UPLOAD_PASSWORD）不要写在这里，用 wrangler secret put 设置：
+#   wrangler secret put GH_TOKEN
+#   wrangler secret put UPLOAD_PASSWORD
+
+name = "memory-album-uploader"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+GH_OWNER = "你的GitHub用户名"
+GH_REPO = "memory-album"
+GH_BRANCH = "main"
+PHOTO_DIR = "photos"
+ALLOW_ORIGIN = "*"

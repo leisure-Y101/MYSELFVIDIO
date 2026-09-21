@@ -1,0 +1,15 @@
+# 依赖与缓存
+node_modules/
+.wrangler/
+
+# Worker 本地密钥（绝不提交，但保留 .dev.vars.example 模板）
+worker/.dev.vars
+!worker/.dev.vars.example
+
+# 超过 GitHub 单文件 100MB 限制、无法 push 的大文件
+media/11月25日.mp4
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
