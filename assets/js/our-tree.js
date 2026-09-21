@@ -33,6 +33,7 @@ let lightboxPhotos = [];
 let lightboxIndex = -1;
 let manageMode = false;
 const selectedIndices = new Set();
+const deletedNames = new Set();
 
 function applyTheme(theme) {
   root.dataset.theme = theme;
@@ -293,6 +294,7 @@ async function deleteSelected() {
     try {
       await deleteRemote(photo, password);
       ok += 1;
+      deletedNames.add(photo.name);
     } catch (error) {
       if (/密码/.test(error.message)) {
         sessionStorage.removeItem("swf4-admin-pw");
@@ -354,10 +356,12 @@ async function loadAlbums() {
   setSync("", "正在同步相册");
   if (!local.length) albumGrid.innerHTML = Array.from({ length: 3 }, () => "<div class=\"loading-grid\"></div>").join("");
   try {
-    const response = await fetch(`${API_ROOT}/list`, { cache: "no-store" });
+    const response = await fetch(`${API_ROOT}/list?_=${Date.now()}`, { cache: "no-store" });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "读取相册失败");
-    const remote = (Array.isArray(data.files) ? data.files : []).map(parsePhoto);
+    const remote = (Array.isArray(data.files) ? data.files : [])
+      .map(parsePhoto)
+      .filter((photo) => !deletedNames.has(photo.name));
     photos = [...local, ...remote];
     albums = groupAlbums(photos);
     setSync("online", `已同步 ${photos.length} 个回忆`);
