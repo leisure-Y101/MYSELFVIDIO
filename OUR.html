@@ -74,7 +74,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
             <span>全部相册</span>
           </button>
-          <span class="detail-count" id="albumDetailCount"></span>
+          <div class="detail-head-right">
+            <span class="detail-count" id="albumDetailCount"></span>
+            <button class="manage-toggle" id="manageToggle" type="button" aria-label="管理照片" title="管理照片" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
+            </button>
+          </div>
         </div>
         <div class="detail-title-row">
           <div>
@@ -82,6 +87,15 @@
             <h2 id="albumDetailTitle">相册</h2>
           </div>
           <p class="detail-date" id="albumDetailDate"></p>
+        </div>
+        <div class="select-bar" id="selectBar" hidden>
+          <span class="select-count" id="selectCount">已选 0 项</span>
+          <div class="select-actions">
+            <button type="button" data-select="all">全选</button>
+            <button type="button" data-select="download" disabled>下载</button>
+            <button type="button" data-select="delete" disabled>删除</button>
+            <button type="button" data-select="cancel">取消</button>
+          </div>
         </div>
         <div class="photo-grid" id="photoGrid" aria-live="polite"></div>
       </section>

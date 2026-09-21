@@ -109,6 +109,20 @@ main, .site-footer { position: relative; z-index: 1; }
 
 .album-detail { animation: fadeIn .4s both; }
 .detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 45px; }
+.detail-head-right { display: flex; align-items: center; gap: 12px; }
+.manage-toggle { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 5px; transition: background .2s, color .2s, border-color .2s; }
+.manage-toggle:hover { background: var(--white); }
+.manage-toggle.is-active { color: #fff; background: var(--green); border-color: var(--green); }
+.manage-toggle svg { width: 17px; height: 17px; }
+
+.select-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin: 0 0 20px; padding: 10px 14px; background: var(--white); border: 1px solid var(--line); border-radius: 5px; }
+.select-count { color: var(--muted); font-size: 12px; }
+.select-actions { display: flex; gap: 8px; }
+.select-actions button { padding: 7px 13px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 99px; font-size: 12px; transition: background .2s, color .2s, opacity .2s; }
+.select-actions button:hover { background: var(--paper-deep); }
+.select-actions button:disabled { opacity: .4; cursor: not-allowed; }
+.select-actions button[data-select="delete"] { color: #fff; background: var(--orange); border-color: var(--orange); }
+.select-actions button[data-select="cancel"] { background: transparent; }
 .back-button { display: inline-flex; align-items: center; gap: 6px; padding: 0; color: var(--muted); background: transparent; font-size: 12px; }
 .back-button:hover { color: var(--ink); }
 .back-button svg { width: 17px; height: 17px; }
@@ -118,6 +132,13 @@ main, .site-footer { position: relative; z-index: 1; }
 .detail-date { margin: 0 0 4px; }
 .photo-grid { columns: 4 180px; column-gap: 13px; }
 .photo-tile { position: relative; width: 100%; margin: 0 0 13px; padding: 0; overflow: hidden; break-inside: avoid; background: var(--paper-deep); cursor: zoom-in; }
+.photo-tile .tile-check { display: none; position: absolute; z-index: 3; top: 8px; left: 8px; width: 22px; height: 22px; border: 2px solid rgba(255,255,255,.92); border-radius: 50%; background: rgba(20,26,22,.35); box-shadow: 0 1px 5px rgba(0,0,0,.4); }
+.album-detail.is-managing .photo-tile { cursor: pointer; }
+.album-detail.is-managing .photo-tile .tile-check { display: block; }
+.photo-tile.is-selected { outline: 3px solid var(--green); outline-offset: -3px; }
+.photo-tile.is-selected img, .photo-tile.is-selected video { opacity: .82; }
+.photo-tile.is-selected .tile-check { background: var(--green); border-color: #fff; }
+.photo-tile.is-selected .tile-check::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
 .photo-tile img { display: block; width: 100%; height: auto; min-height: 135px; object-fit: cover; transition: transform .55s; }
 .photo-tile video { display: block; width: 100%; min-height: 135px; object-fit: cover; }
 .photo-tile.is-video::after { content: ''; position: absolute; inset: 0; width: 0; height: 0; margin: auto; border-style: solid; border-width: 11px 0 11px 19px; border-color: transparent transparent transparent #fff; filter: drop-shadow(0 2px 7px rgba(0,0,0,.65)); pointer-events: none; }

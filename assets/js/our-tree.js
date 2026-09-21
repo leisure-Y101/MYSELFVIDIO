@@ -19,6 +19,9 @@ const dropZone = $("#dropZone");
 const fileSummary = $("#fileSummary");
 const startUpload = $("#startUpload");
 const toast = $("#toast");
+const selectBar = $("#selectBar");
+const selectCount = $("#selectCount");
+const manageToggle = $("#manageToggle");
 const root = document.documentElement;
 
 let photos = [];
@@ -28,6 +31,8 @@ let selectedFiles = [];
 let activeAlbum = null;
 let lightboxPhotos = [];
 let lightboxIndex = -1;
+let manageMode = false;
+const selectedIndices = new Set();
 
 function applyTheme(theme) {
   root.dataset.theme = theme;
@@ -85,13 +90,13 @@ function parsePhoto(file, index) {
   const name = String(file.name || `memory-${index}`).replace(/^\d+-/, "");
   const dotted = name.match(/^swf4\.([^.]+)\.([^.]+)\.(\d+)\./);
   if (dotted) {
-    return { ...file, owner: decodeMeta(dotted[1]), album: decodeMeta(dotted[2]), timestamp: Number(dotted[3]) || 0, index };
+    return { ...file, owner: decodeMeta(dotted[1]), album: decodeMeta(dotted[2]), timestamp: Number(dotted[3]) || 0, index, remote: true };
   }
   const legacy = name.match(/^swf4-([A-Za-z0-9_-]+)-([A-Za-z0-9_-]+)-(\d+)-/);
   if (legacy) {
-    return { ...file, owner: decodeMeta(legacy[1]), album: decodeMeta(legacy[2]), timestamp: Number(legacy[3]) || 0, index };
+    return { ...file, owner: decodeMeta(legacy[1]), album: decodeMeta(legacy[2]), timestamp: Number(legacy[3]) || 0, index, remote: true };
   }
-  return { ...file, owner: "往日存档", album: "未命名相册", timestamp: 0, index };
+  return { ...file, owner: "往日存档", album: "未命名相册", timestamp: 0, index, remote: true };
 }
 
 function localPhotos() {
@@ -101,7 +106,8 @@ function localPhotos() {
     owner: item.owner || "西南 F4",
     album: item.album || "本地影像",
     timestamp: Number(item.timestamp) || 0,
-    index
+    index,
+    local: true
   }));
 }
 
@@ -160,26 +166,176 @@ function escapeAttr(value) { return escapeHtml(value); }
 function openAlbum(index) {
   activeAlbum = albums[index];
   if (!activeAlbum) return;
+  exitManageMode();
   $("#albumDetailOwner").textContent = activeAlbum.owner;
   $("#albumDetailTitle").textContent = activeAlbum.title;
   $("#albumDetailCount").textContent = `${activeAlbum.photos.length} 个回忆`;
   $("#albumDetailDate").textContent = activeAlbum.date;
+  renderPhotoTiles();
+  albumGrid.hidden = true;
+  albumDetail.hidden = false;
+  document.querySelector("#albums").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderPhotoTiles() {
+  if (!activeAlbum) return;
   unobserveFloats(photoGrid);
   photoGrid.innerHTML = activeAlbum.photos.map((photo, index) => {
     const source = escapeAttr(photo.url);
     const label = escapeAttr(photo.name || `${activeAlbum.title} · ${index + 1}`);
     const delay = Math.min(index * 45, 540);
-    if (isVideo(photo.url)) return `<button class="photo-tile is-video" data-float style="--float-delay:${delay}ms" type="button" data-photo-index="${index}"><video src="${source}#t=0.1" muted playsinline preload="metadata"></video></button>`;
-    return `<button class="photo-tile" data-float style="--float-delay:${delay}ms" type="button" data-photo-index="${index}"><img src="${source}" alt="${label}" loading="lazy"></button>`;
+    const media = isVideo(photo.url)
+      ? `<video src="${source}#t=0.1" muted playsinline preload="metadata"></video>`
+      : `<img src="${source}" alt="${label}" loading="lazy">`;
+    return `<button class="photo-tile${isVideo(photo.url) ? " is-video" : ""}" data-float style="--float-delay:${delay}ms" type="button" data-photo-index="${index}">${media}<span class="tile-check" aria-hidden="true"></span></button>`;
   }).join("");
-  albumGrid.hidden = true;
-  albumDetail.hidden = false;
-  document.querySelector("#albums").scrollIntoView({ behavior: "smooth", block: "start" });
   observeFloats(photoGrid);
-  photoGrid.querySelectorAll(".photo-tile").forEach((tile) => tile.addEventListener("click", () => openLightbox(activeAlbum.photos, Number(tile.dataset.photoIndex))));
+  photoGrid.querySelectorAll(".photo-tile").forEach((tile) => {
+    tile.addEventListener("click", () => {
+      const i = Number(tile.dataset.photoIndex);
+      if (manageMode) toggleSelect(i, tile);
+      else openLightbox(activeAlbum.photos, i);
+    });
+  });
+  updateSelectBar();
+}
+
+function exitManageMode() {
+  manageMode = false;
+  selectedIndices.clear();
+  albumDetail.classList.remove("is-managing");
+  if (selectBar) selectBar.hidden = true;
+  if (manageToggle) {
+    manageToggle.classList.remove("is-active");
+    manageToggle.setAttribute("aria-pressed", "false");
+  }
+  photoGrid.querySelectorAll(".photo-tile.is-selected").forEach((el) => el.classList.remove("is-selected"));
+  updateSelectBar();
+}
+
+function toggleManageMode() {
+  if (!activeAlbum) return;
+  if (manageMode) { exitManageMode(); return; }
+  manageMode = true;
+  selectedIndices.clear();
+  albumDetail.classList.add("is-managing");
+  if (selectBar) selectBar.hidden = false;
+  if (manageToggle) {
+    manageToggle.classList.add("is-active");
+    manageToggle.setAttribute("aria-pressed", "true");
+  }
+  updateSelectBar();
+}
+
+function toggleSelect(index, tile) {
+  if (selectedIndices.has(index)) selectedIndices.delete(index);
+  else selectedIndices.add(index);
+  tile.classList.toggle("is-selected", selectedIndices.has(index));
+  updateSelectBar();
+}
+
+function updateSelectBar() {
+  if (!selectBar || !selectCount) return;
+  const count = selectedIndices.size;
+  selectCount.textContent = `已选 ${count} 项`;
+  const del = selectBar.querySelector('[data-select="delete"]');
+  const download = selectBar.querySelector('[data-select="download"]');
+  if (del) del.disabled = count === 0;
+  if (download) download.disabled = count === 0;
+}
+
+function toggleSelectAll() {
+  if (!activeAlbum) return;
+  if (selectedIndices.size === activeAlbum.photos.length) selectedIndices.clear();
+  else activeAlbum.photos.forEach((_, i) => selectedIndices.add(i));
+  photoGrid.querySelectorAll(".photo-tile").forEach((tile) => {
+    tile.classList.toggle("is-selected", selectedIndices.has(Number(tile.dataset.photoIndex)));
+  });
+  updateSelectBar();
+}
+
+function getAdminPassword() {
+  if (ALBUM_CONFIG.uploadPassword) return ALBUM_CONFIG.uploadPassword;
+  const saved = sessionStorage.getItem("swf4-admin-pw");
+  if (saved) return saved;
+  const input = window.prompt("请输入口令（和上传口令相同）");
+  if (input === null) return null;
+  sessionStorage.setItem("swf4-admin-pw", input);
+  return input;
+}
+
+async function deleteRemote(photo, password) {
+  const response = await fetch(`${API_ROOT}/delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password, name: photo.name })
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) throw new Error(data.error || "删除失败");
+  return data;
+}
+
+async function deleteSelected() {
+  if (!activeAlbum || !selectedIndices.size) return;
+  const chosen = [...selectedIndices].map((i) => activeAlbum.photos[i]).filter(Boolean);
+  const remoteItems = chosen.filter((photo) => photo.remote);
+  const localCount = chosen.length - remoteItems.length;
+  if (!remoteItems.length) {
+    showToast("选中的都是本地文件，请到仓库里删除");
+    return;
+  }
+  if (!window.confirm(`确定删除选中的 ${remoteItems.length} 个吗？删除后网页无法恢复。`)) return;
+  const password = getAdminPassword();
+  if (password === null) return;
+  let ok = 0;
+  const errors = [];
+  for (const photo of remoteItems) {
+    try {
+      await deleteRemote(photo, password);
+      ok += 1;
+    } catch (error) {
+      if (/密码/.test(error.message)) {
+        sessionStorage.removeItem("swf4-admin-pw");
+        errors.push(error.message);
+        break;
+      }
+      errors.push(error.message);
+    }
+  }
+  if (ok) showToast(`已删除 ${ok} 个${errors.length ? `，${errors.length} 个失败` : ""}${localCount ? `；${localCount} 个本地文件已跳过` : ""}`);
+  else showToast(`删除失败：${errors[0] || "未知错误"}`);
+  const key = activeAlbum.key;
+  await loadAlbums();
+  const nextIndex = albums.findIndex((album) => album.key === key);
+  if (nextIndex >= 0) openAlbum(nextIndex);
+  else closeAlbum();
+}
+
+async function downloadSelected() {
+  if (!activeAlbum || !selectedIndices.size) return;
+  const chosen = [...selectedIndices].map((i) => activeAlbum.photos[i]).filter(Boolean);
+  let ok = 0;
+  for (const photo of chosen) {
+    try {
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = photo.name || "memory";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      ok += 1;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    } catch (_) { /* 跳过 */ }
+  }
+  showToast(ok ? `已开始下载 ${ok} 个` : "下载失败");
 }
 
 function closeAlbum() {
+  exitManageMode();
   activeAlbum = null;
   albumDetail.hidden = true;
   albumGrid.hidden = false;
@@ -386,6 +542,17 @@ $("#headerUpload").addEventListener("click", openUpload);
 $("#floatingUpload").addEventListener("click", openUpload);
 $("#refreshButton").addEventListener("click", loadAlbums);
 $("#backToAlbums").addEventListener("click", closeAlbum);
+if (manageToggle) manageToggle.addEventListener("click", toggleManageMode);
+if (selectBar) {
+  selectBar.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-select]")?.dataset.select;
+    if (!action) return;
+    if (action === "all") toggleSelectAll();
+    else if (action === "cancel") exitManageMode();
+    else if (action === "delete") deleteSelected();
+    else if (action === "download") downloadSelected();
+  });
+}
 $("#closeUpload").addEventListener("click", closeUpload);
 $("#cancelUpload").addEventListener("click", closeUpload);
 $("#uploadForm").addEventListener("submit", submitUpload);
