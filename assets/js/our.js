@@ -100,15 +100,18 @@ function parsePhoto(file, index) {
 }
 
 function localPhotos() {
-  return LOCAL_MEDIA.map((item, index) => ({
-    name: item.name || `local-${index}`,
-    url: item.url,
-    owner: item.owner || "西南 F4",
-    album: item.album || "本地影像",
-    timestamp: Number(item.timestamp) || 0,
-    index,
-    local: true
-  }));
+  const list = Array.isArray(window.LOCAL_MEDIA) ? window.LOCAL_MEDIA : LOCAL_MEDIA;
+  return list
+    .filter((item) => !deletedNames.has(item.name))
+    .map((item, index) => ({
+      name: item.name || `local-${index}`,
+      url: item.url,
+      owner: item.owner || "西南 F4",
+      album: item.album || "本地影像",
+      timestamp: Number(item.timestamp) || 0,
+      index,
+      local: true
+    }));
 }
 
 function groupAlbums(list) {
@@ -269,25 +272,33 @@ async function deleteRemote(photo, password) {
   return data;
 }
 
+async function deleteLocal(photo, password) {
+  const response = await fetch(`${API_ROOT}/delete-local`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password, name: photo.name })
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) throw new Error(data.error || "删除失败");
+  return data;
+}
+
 async function deleteSelected() {
   if (!activeAlbum || !selectedIndices.size) return;
   const chosen = [...selectedIndices].map((i) => activeAlbum.photos[i]).filter(Boolean);
-  const remoteItems = chosen.filter((photo) => photo.remote);
-  const localCount = chosen.length - remoteItems.length;
-  if (!remoteItems.length) {
-    showToast("选中的都是本地文件，请到仓库里删除");
-    return;
-  }
-  if (!window.confirm(`确定删除选中的 ${remoteItems.length} 个吗？删除后网页无法恢复。`)) return;
+  const jobs = chosen.map((photo) => ({ photo, kind: photo.remote ? "remote" : "local" }));
+  if (!jobs.length) return;
+  if (!window.confirm(`确定删除选中的 ${jobs.length} 个吗？删除后网页无法恢复。`)) return;
   const password = getAdminPassword();
   if (password === null) return;
   let ok = 0;
   const errors = [];
-  for (const photo of remoteItems) {
+  for (const job of jobs) {
     try {
-      await deleteRemote(photo, password);
+      if (job.kind === "remote") await deleteRemote(job.photo, password);
+      else await deleteLocal(job.photo, password);
       ok += 1;
-      deletedNames.add(photo.name);
+      deletedNames.add(job.photo.name);
     } catch (error) {
       if (/密码/.test(error.message)) {
         sessionStorage.removeItem("swf4-admin-pw");
@@ -297,7 +308,7 @@ async function deleteSelected() {
       errors.push(error.message);
     }
   }
-  if (ok) showToast(`已删除 ${ok} 个${errors.length ? `，${errors.length} 个失败` : ""}${localCount ? `；${localCount} 个本地文件已跳过` : ""}`);
+  if (ok) showToast(`已删除 ${ok} 个${errors.length ? `，${errors.length} 个失败` : ""}`);
   else showToast(`删除失败：${errors[0] || "未知错误"}`);
   const key = activeAlbum.key;
   await loadAlbums();
