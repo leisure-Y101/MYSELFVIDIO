@@ -1,5 +1,6 @@
 /* 由 scripts/build-album.ps1 自动生成，请勿手动修改。 */
 window.LOCAL_MEDIA = [
+  { name: '_selftest_delete.mp4', url: 'media/_selftest_delete.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1790002547614 },
   { name: '3051a878bdbfe447e7449a45878d9d30.mp4', url: 'media/3051a878bdbfe447e7449a45878d9d30.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789998886383 },
   { name: '688a92094457d86f47eed0aeaa62d6b7.mp4', url: 'media/688a92094457d86f47eed0aeaa62d6b7.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737085430 },
   { name: '85665f235a550b5b49106a54b56bb83b.mp4', url: 'media/85665f235a550b5b49106a54b56bb83b.mp4', owner: '西南 F4', album: '本地影像', timestamp: 1789737084939 },
