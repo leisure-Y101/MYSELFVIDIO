@@ -8,5 +8,5 @@
  * ============================================================ */
 window.ALBUM_CONFIG = {
   workerUrl: "https://proud-flower-5f26.hleisure161.workers.dev",
-  uploadPassword: ""
+  uploadPassword: "101"
 };
